@@ -4,7 +4,7 @@
   "description": "Exercises of the fullstackopen course, part 4: building a bloglist app",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --verbose",
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/bayodesegun/fullstackopen-bloglist#readme",
   "devDependencies": {
+    "jest": "^29.7.0",
     "nodemon": "^3.0.1"
   },
   "dependencies": {
@@ -32,5 +33,8 @@
     "express": "^4.18.2",
     "mongoose": "^8.0.0",
     "morgan": "^1.10.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
