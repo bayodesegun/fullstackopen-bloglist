@@ -1,0 +1,35 @@
+{
+  "name": "fullstackopen-bloglist",
+  "version": "1.0.0",
+  "description": "Exercises of the fullstackopen course, part 4: building a bloglist app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bayodesegun/fullstackopen-bloglist.git"
+  },
+  "keywords": [
+    "node",
+    "express",
+    "mongodb"
+  ],
+  "author": "Bayode Aderinola",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bayodesegun/fullstackopen-bloglist/issues"
+  },
+  "homepage": "https://github.com/bayodesegun/fullstackopen-bloglist#readme",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "mongoose": "^8.0.0"
+  }
+}
