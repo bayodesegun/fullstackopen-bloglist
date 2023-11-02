@@ -12,14 +12,14 @@ const favoriteBlog = (blogs) => {
 }
 
 const mostBlogs = (blogs) => {
-  const authorBlogCount = {}
+  const authorBlogs = {}
   let _mostBlogs = undefined
   blogs.forEach((blog) => {
-    if (authorBlogCount[blog.author]) authorBlogCount[blog.author] += 1
-    else authorBlogCount[blog.author] = 1
+    if (authorBlogs[blog.author]) authorBlogs[blog.author] += 1
+    else authorBlogs[blog.author] = 1
   })
-  const maxBlogs = Math.max(...Object.values(authorBlogCount))
-  Object.entries(authorBlogCount).forEach(([key, value]) => {
+  const maxBlogs = Math.max(...Object.values(authorBlogs))
+  Object.entries(authorBlogs).forEach(([key, value]) => {
     if (value === maxBlogs) {
       _mostBlogs = {
         author: key,
@@ -30,9 +30,29 @@ const mostBlogs = (blogs) => {
   return _mostBlogs
 }
 
+const mostLikes = (blogs) => {
+  const authorLikes = {}
+  let _mostLikes = undefined
+  blogs.forEach((blog) => {
+    if (authorLikes[blog.author]) authorLikes[blog.author] += blog.likes
+    else authorLikes[blog.author] = blog.likes
+  })
+  const maxLikes = Math.max(...Object.values(authorLikes))
+  Object.entries(authorLikes).forEach(([key, value]) => {
+    if (value === maxLikes) {
+      _mostLikes = {
+        author: key,
+        likes: value
+      }
+    }
+  })
+  return _mostLikes
+}
+
 module.exports = {
   dummy,
   totalLikes,
   favoriteBlog,
-  mostBlogs
+  mostBlogs,
+  mostLikes
 }
