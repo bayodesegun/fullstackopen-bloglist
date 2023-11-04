@@ -17,19 +17,19 @@ beforeAll(async () => {
   }
 }, 100000)
 
-describe('blogs list', () => {
+describe('blogs list endpoint', () => {
   test('returns list as json with code 200 OK', async () => {
     await api
       .get('/api/blogs')
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-  }, 100000)
+  })
 
   test('returns the right number of blogs', async () => {
     const response = await api.get('/api/blogs')
     expect(response.body).toHaveLength(3)
-  }, 100000)
+  })
 
   test('returns blogs with unique IDs named "id"', async () => {
     const response = await api.get('/api/blogs')
@@ -40,7 +40,32 @@ describe('blogs list', () => {
       expect(blog.id).not.toBe(prevId)
       prevId = blog.id
     }
-  }, 100000)
+  })
+})
+
+describe('blog create endpoint', () => {
+  test('correctly creates a blog, returns jsons and code 201 created', async () => {
+    const blog = {
+      title: 'Test blog',
+      author: 'Jest',
+      likes: 10
+    }
+    const response = await api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Accept', 'application/json')
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    createdBlog = response.body
+    expect(createdBlog.title).toBe('Test blog')
+    expect(createdBlog.author).toBe('Jest')
+    expect(createdBlog.likes).toBe(10)
+    expect(createdBlog.id).toBeDefined()
+
+    const dbBlogs = await api.get('/api/blogs')
+    expect(dbBlogs.body).toHaveLength(testBlogs.length + 1)
+  })
 })
 
 afterAll(async () => {
