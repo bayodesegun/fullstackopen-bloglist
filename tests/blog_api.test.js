@@ -9,7 +9,7 @@ const Blog = require('../models/blog')
 // Get three out of the test blogs
 const testBlogs = listHelper.allBlogs.slice(0, 3)
 
-beforeAll(async () => {
+beforeEach(async () => {
   await Blog.deleteMany({})
   for (let blog of testBlogs) {
     const blog_ = Blog(blog)
@@ -65,6 +65,54 @@ describe('blog create endpoint', () => {
 
     const dbBlogs = await api.get('/api/blogs')
     expect(dbBlogs.body).toHaveLength(testBlogs.length + 1)
+  })
+
+  test('sets likes to 0 if not specified in the request', async () => {
+    const blog = {
+      title: 'Test blog without likes',
+      author: 'Jester',
+    }
+    const response = await api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Accept', 'application/json')
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    createdBlog = response.body
+    expect(createdBlog.likes).toBe(0)
+  })
+
+  test('returns a 400 bad request if blog title is missing', async () => {
+    const blog = {
+      author: 'Titleless Author',
+      likes: 2
+    }
+    await api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Accept', 'application/json')
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    const dbBlogs = await api.get('/api/blogs')
+    expect(dbBlogs.body).toHaveLength(testBlogs.length)
+  })
+
+  test('returns a 400 bad request if blog author is missing', async () => {
+    const blog = {
+      title: 'Authorless blog',
+      likes: 2
+    }
+    await api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Accept', 'application/json')
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    const dbBlogs = await api.get('/api/blogs')
+    expect(dbBlogs.body).toHaveLength(testBlogs.length)
   })
 })
 
