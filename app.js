@@ -1,4 +1,5 @@
 const express = require('express')
+require('express-async-errors')
 const app = express()
 const cors = require('cors')
 const mongoose = require('mongoose')
@@ -7,7 +8,7 @@ const config = require('./utils/config')
 const blogsRouter = require('./controllers/blogs')
 const middleware = require('./utils/middleware')
 
-mongoose.connect(config.MONGO_URL)
+mongoose.connect(config.MONGODB_URI)
 
 app.use(cors())
 app.use(express.static('dist'))

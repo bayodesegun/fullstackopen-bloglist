@@ -4,9 +4,9 @@
   "description": "Exercises of the fullstackopen course, part 4: building a bloglist app",
   "main": "index.js",
   "scripts": {
-    "test": "jest --verbose",
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "test": "cross-env NODE_ENV=test jest --verbose --runInBand",
+    "start": "cross-env NODE_ENV=production index.js",
+    "dev": "cross-env NODE_ENV=development index.js"
   },
   "repository": {
     "type": "git",
@@ -25,16 +25,20 @@
   "homepage": "https://github.com/bayodesegun/fullstackopen-bloglist#readme",
   "devDependencies": {
     "jest": "^29.7.0",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.3"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
     "mongoose": "^8.0.0",
     "morgan": "^1.10.0"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "globalTeardown": "./tests/teardown.js"
   }
 }
