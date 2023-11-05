@@ -1,4 +1,5 @@
 const listHelper = require('../utils/list_helper')
+const testHelper = require('./test_helper')
 
 test('dummy returns one', () => {
   const blogs = []
@@ -16,14 +17,14 @@ describe('total likes', () => {
   })
 
   test('when list has only one blog, equals the likes of that', () => {
-    const blogs = [listHelper.allBlogs[0]]
+    const blogs = [testHelper.testBlogs[0]]
 
     const result = listHelper.totalLikes(blogs)
     expect(result).toBe(7)
   })
 
   test('of a bigger list is calculated right', () => {
-    const blogs = listHelper.allBlogs
+    const blogs = testHelper.testBlogs
 
     const result = listHelper.totalLikes(blogs)
     expect(result).toBe(36)
@@ -39,17 +40,17 @@ describe('favorite blog', () => {
   })
 
   test('when list has only one blog, equals that blog', () => {
-    const blogs = [listHelper.allBlogs[0]]
+    const blogs = [testHelper.testBlogs[0]]
 
     const result = listHelper.favoriteBlog(blogs)
     expect(result).toEqual(blogs[0])
   })
 
   test('of a bigger list is calculated right', () => {
-    const blogs = listHelper.allBlogs
+    const blogs = testHelper.testBlogs
 
     const result = listHelper.favoriteBlog(blogs)
-    expect(result).toEqual(listHelper.allBlogs[2])
+    expect(result).toEqual(testHelper.testBlogs[2])
   })
 })
 
@@ -62,9 +63,9 @@ describe('most blogs', () => {
   })
 
   test('when list has only one blog, equals its author with 1 blog', () => {
-    const blogs = [listHelper.allBlogs[0]]
+    const blogs = [testHelper.testBlogs[0]]
     const _result = {
-      author: listHelper.allBlogs[0].author,
+      author: testHelper.testBlogs[0].author,
       blogs: 1
     }
     const result = listHelper.mostBlogs(blogs)
@@ -72,7 +73,7 @@ describe('most blogs', () => {
   })
 
   test('of a bigger list is calculated right', () => {
-    const blogs = listHelper.allBlogs
+    const blogs = testHelper.testBlogs
     const _result = {
       author: 'Robert C. Martin',
       blogs: 3
@@ -91,9 +92,9 @@ describe('most likes', () => {
   })
 
   test('when list has only one blog, equals its author with its likes', () => {
-    const blogs = [listHelper.allBlogs[0]]
+    const blogs = [testHelper.testBlogs[0]]
     const _result = {
-      author: listHelper.allBlogs[0].author,
+      author: testHelper.testBlogs[0].author,
       likes: 7
     }
     const result = listHelper.mostLikes(blogs)
@@ -101,7 +102,7 @@ describe('most likes', () => {
   })
 
   test('of a bigger list is calculated right', () => {
-    const blogs = listHelper.allBlogs
+    const blogs = testHelper.testBlogs
     const _result = {
       author: 'Edsger W. Dijkstra',
       likes: 17

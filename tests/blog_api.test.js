@@ -4,17 +4,15 @@ const app = require('../app')
 
 const api = supertest(app)
 const listHelper = require('../utils/list_helper')
+const testHelper = require('./test_helper.js')
 const Blog = require('../models/blog')
 
 // Get three out of the test blogs
-const testBlogs = listHelper.allBlogs.slice(0, 3)
+const testBlogs = testHelper.testBlogs.slice(0, 3)
 
 beforeEach(async () => {
   await Blog.deleteMany({})
-  for (let blog of testBlogs) {
-    const blog_ = Blog(blog)
-    await blog_.save()
-  }
+  await Blog.insertMany(testBlogs)
 }, 100000)
 
 describe('blogs list endpoint', () => {
@@ -23,7 +21,6 @@ describe('blogs list endpoint', () => {
       .get('/api/blogs')
       .expect(200)
       .expect('Content-Type', /application\/json/)
-
   })
 
   test('returns the right number of blogs', async () => {
@@ -63,8 +60,8 @@ describe('blog create endpoint', () => {
     expect(createdBlog.likes).toBe(10)
     expect(createdBlog.id).toBeDefined()
 
-    const dbBlogs = await api.get('/api/blogs')
-    expect(dbBlogs.body).toHaveLength(testBlogs.length + 1)
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length + 1)
   })
 
   test('sets likes to 0 if not specified in the request', async () => {
@@ -95,8 +92,8 @@ describe('blog create endpoint', () => {
       .expect(400)
       .expect('Content-Type', /application\/json/)
 
-    const dbBlogs = await api.get('/api/blogs')
-    expect(dbBlogs.body).toHaveLength(testBlogs.length)
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
   })
 
   test('returns a 400 bad request if blog author is missing', async () => {
@@ -111,8 +108,34 @@ describe('blog create endpoint', () => {
       .expect(400)
       .expect('Content-Type', /application\/json/)
 
-    const dbBlogs = await api.get('/api/blogs')
-    expect(dbBlogs.body).toHaveLength(testBlogs.length)
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
+  })
+})
+
+describe('blog delete endpoint', () => {
+  test('correctly deletes a blog and returns code 204 no content', async () => {
+    const initialBlogs = await testHelper.blogsInDb()
+    const id = initialBlogs[0].id
+    await api
+      .delete(`/api/blogs/${id}`)
+      .expect(204)
+
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length - 1)
+    for (let blog of dbBlogs) {
+      expect(blog.id).not.toEqual(id)
+    }
+  })
+
+  test('raises a 400 bad request error if the ID is invalid', async () => {
+    const id = 'abcdef123456'
+    await api
+      .delete(`/api/blogs/${id}`)
+      .expect(400)
+
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
   })
 })
 
