@@ -139,6 +139,30 @@ describe('blog delete endpoint', () => {
   })
 })
 
+describe('blog update endpoint', () => {
+  test('correctly updates a blog, returns jsons and code 200 OK', async () => {
+    const currentBlogs = await testHelper.blogsInDb()
+    const blog = currentBlogs[0]
+    const blogUpdate = {
+      title: blog.title,
+      author: blog.author,
+      likes: 100
+    }
+    const response = await api
+      .put(`/api/blogs/${blog.id}`)
+      .send(blogUpdate)
+      .set('Accept', 'application/json')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    updatedBlog = response.body
+    expect(updatedBlog.likes).toBe(100)
+
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
+  })
+})
+
 afterAll(async () => {
   await mongoose.connection.close()
 })
