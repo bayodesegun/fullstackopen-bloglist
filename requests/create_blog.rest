@@ -3,8 +3,8 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJheW9zZWd1biIsImlkIjoiNjU0ZmM3ODZiYWNhNjdiY2FjZWJmM2YxIiwiaWF0IjoxNzAwMDk1ODYxLCJleHAiOjE3MDAwOTk0NjF9.8OgyLz3RdaZ43Xz_wsvohY4u5-VKAvPRLrMBRomxTDU
 
 {
-    "title": "Some random blog",
+    "title": "Some random blog2",
     "author": "Blogger Ex",
     "url": "https://bloggerEx.blog.com",
-    "likes": 550
+    "likes": 50
 }
