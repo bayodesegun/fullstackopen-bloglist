@@ -30,8 +30,22 @@ blogsRouter.post('/', async (request, response, next) => {
 })
 
 blogsRouter.delete('/:id', async (request, response, next) => {
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'Invalid token' })
+  }
+
+  const user = await User.findById(decodedToken.id)
+
   const id = request.params.id
-  await Blog.findByIdAndDelete(id)
+  const blog = await Blog.findById(id)
+
+  if (!blog.user || blog.user.toString() !== user._id.toString()) {
+    return response.status(403).json({ error: 'Access denied. You can only delete your own blogs!' })
+  }
+
+  await Blog.findByIdAndRemove(id)
+
   response.status(204).end()
 })
 
