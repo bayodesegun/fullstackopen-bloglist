@@ -1,9 +1,10 @@
 POST http://localhost:3003/api/blogs
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImJheW9zZWd1biIsImlkIjoiNjU0ZmM3ODZiYWNhNjdiY2FjZWJmM2YxIiwiaWF0IjoxNzAwMDk1ODYxLCJleHAiOjE3MDAwOTk0NjF9.8OgyLz3RdaZ43Xz_wsvohY4u5-VKAvPRLrMBRomxTDU
 
 {
-    "title": "My 6th blog",
-    "author": "Blogger3",
-    "url": "https://blogger3.blog.com",
-    "likes": 50
+    "title": "Some random blog",
+    "author": "Blogger Ex",
+    "url": "https://bloggerEx.blog.com",
+    "likes": 550
 }
