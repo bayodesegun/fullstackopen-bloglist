@@ -2,7 +2,7 @@ const morgan = require('morgan')
 const logger = require('./logger')
 
 const requestLogger = (request, response) => {
-  morgan.token('data', (req, res) => (req.method === 'POST' ? JSON.stringify(req.body) : ' '))
+  morgan.token('data', (req, res) => (req.method === 'POST' ? JSON.stringify({...req.body, password: undefined}) : ''))
   return morgan(':method :url :status :res[content-length] - :response-time ms :data')
 }
 
