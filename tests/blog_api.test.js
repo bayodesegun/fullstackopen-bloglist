@@ -2,20 +2,69 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 
-const api = supertest(app)
 const testHelper = require('./test_helper.js')
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken')
+
 
 // Get three out of the test blogs
 const testBlogs = testHelper.testBlogs.slice(0, 3)
 
-beforeEach(async () => {
-  await Blog.deleteMany({})
+// unauthenticated version of the api
+const api = supertest(app)
+
+// authenticated version of the api
+const apiAuth = supertest.agent(app)
+
+// auth header
+const getAuthHeader = async (user) => {
+  const userForToken = {
+    username: user.username,
+    id: user._id,
+  }
+
+  return jwt.sign(
+    userForToken,
+    process.env.SECRET,
+    { expiresIn: 60 * 60 }
+  )
+}
+
+const createUsers = async () => {
   await User.deleteMany({})
-  await Blog.insertMany(testBlogs)
-  const onlyUser = new User({ username: 'Author_1', name: 'Author1', 'passwordHash': 'whatever' })
-  await onlyUser.save()
+
+  const passwordHash = await bcrypt.hash('whatever', 10)
+  const authUser = new User({ username: 'AuthUser', name: 'Auth User', passwordHash })
+  await authUser.save()
+
+  const blogUser = new User({ username: 'BlogUser', name: 'Blog User', passwordHash })
+  await blogUser.save()
+
+  const authHeader = await getAuthHeader(authUser)
+  apiAuth.auth(authHeader, {type: 'bearer'})
+}
+
+const createBlogs = async () => {
+  await Blog.deleteMany({})
+  const blogUser = await User.findOne({ username: 'BlogUser' })
+  for (let blog of testBlogs) {
+    await new Blog({
+      ...blog,
+      user: blogUser._id,
+    }).save()
+  }
+}
+
+
+beforeAll(async () => {
+  await createUsers()
+}, 100000)
+
+
+beforeEach(async () => {
+  await createBlogs()
 }, 100000)
 
 describe('blog list endpoint', () => {
@@ -60,13 +109,29 @@ describe('blog list endpoint', () => {
 })
 
 describe('blog create endpoint', () => {
-  test('correctly creates a blog, returns jsons and code 201 created', async () => {
+  test('returns a 401 if authentication information is missing', async () => {
     const blog = {
       title: 'Test blog',
       author: 'Jest',
       likes: 10
     }
     const response = await api
+      .post('/api/blogs')
+      .send(blog)
+      .set('Accept', 'application/json')
+      .expect(401)
+
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
+  })
+
+  test('correctly creates a blog, returns jsons and code 201 created', async () => {
+    const blog = {
+      title: 'Test blog',
+      author: 'Jest',
+      likes: 10
+    }
+    const response = await apiAuth
       .post('/api/blogs')
       .send(blog)
       .set('Accept', 'application/json')
@@ -88,7 +153,7 @@ describe('blog create endpoint', () => {
       title: 'Test blog without likes',
       author: 'Jester',
     }
-    const response = await api
+    const response = await apiAuth
       .post('/api/blogs')
       .send(blog)
       .set('Accept', 'application/json')
@@ -104,7 +169,7 @@ describe('blog create endpoint', () => {
       author: 'Titleless Author',
       likes: 2
     }
-    await api
+    await apiAuth
       .post('/api/blogs')
       .send(blog)
       .set('Accept', 'application/json')
@@ -120,7 +185,7 @@ describe('blog create endpoint', () => {
       title: 'Authorless blog',
       likes: 2
     }
-    await api
+    await apiAuth
       .post('/api/blogs')
       .send(blog)
       .set('Accept', 'application/json')
@@ -137,7 +202,7 @@ describe('blog create endpoint', () => {
       author: 'Author1',
       likes: 2
     }
-    const response = await api
+    const response = await apiAuth
       .post('/api/blogs')
       .send(blog)
       .set('Accept', 'application/json')
@@ -147,30 +212,64 @@ describe('blog create endpoint', () => {
     const createdBlog = response.body
     expect(createdBlog.user).toBeDefined()
     const user = await User.findById(createdBlog.user)
-    expect(user.blogs.length).toBe(1)
+    expect(user.blogs.length).toBeGreaterThanOrEqual(1)
     const userBlogs = user.blogs.map(b => b.valueOf())
-    expect(userBlogs[0]).toEqual(createdBlog.id)
+    expect(userBlogs).toContain(createdBlog.id)
   })
 })
 
 describe('blog delete endpoint', () => {
-  test('correctly deletes a blog and returns code 204 no content', async () => {
+  test('returns a 401 if the user is not authenticated', async () => {
     const initialBlogs = await testHelper.blogsInDb()
     const id = initialBlogs[0].id
     await api
       .delete(`/api/blogs/${id}`)
-      .expect(204)
+      .expect(401)
 
     const dbBlogs = await testHelper.blogsInDb()
-    expect(dbBlogs).toHaveLength(testBlogs.length - 1)
-    for (let blog of dbBlogs) {
-      expect(blog.id).not.toEqual(id)
-    }
+    expect(dbBlogs).toHaveLength(testBlogs.length)
+  })
+
+  test('authenticated user cannot delete 3rd party blogs', async () => {
+    // get a blog not created by the authenticated user
+    const initialBlogs = await testHelper.blogsInDb()
+    const id = initialBlogs[0].id
+
+    await apiAuth
+      .delete(`/api/blogs/${id}`)
+      .expect(403)
+
+    const dbBlogs = await testHelper.blogsInDb()
+    expect(dbBlogs).toHaveLength(testBlogs.length)
+  })
+
+  test('authenticated user can delete own blog', async () => {
+    // get a blog created by the authenticated user
+    const authUser = await User.findOne({ username: 'AuthUser' })
+    await new Blog({
+      title: 'Auth User blog',
+      author: 'Auth User',
+      likes: 2,
+      user: authUser._id
+    }).save()
+
+    const currentBlogs = await testHelper.blogsInDb()
+    expect(currentBlogs).toHaveLength(testBlogs.length + 1)
+
+    const blog = await Blog.findOne({ title: 'Auth User blog' })
+    const id = blog._id
+
+    await apiAuth
+      .delete(`/api/blogs/${id}`)
+      .expect(204)
+
+    const finalBlogs = await testHelper.blogsInDb()
+    expect(finalBlogs).toHaveLength(testBlogs.length)
   })
 
   test('raises a 400 bad request error if the ID is invalid', async () => {
     const id = 'abcd1256'
-    await api
+    await apiAuth
       .delete(`/api/blogs/${id}`)
       .expect(400)
 
@@ -180,26 +279,60 @@ describe('blog delete endpoint', () => {
 })
 
 describe('blog update endpoint', () => {
-  test('correctly updates a blog, returns jsons and code 200 OK', async () => {
+  test('returns a 401 if authentication is missing', async () => {
     const currentBlogs = await testHelper.blogsInDb()
     const blog = currentBlogs[0]
     const blogUpdate = {
-      title: blog.title,
-      author: blog.author,
+      title: 'Auth User blog',
+      author: 'Auth User',
       likes: 100
     }
-    const response = await api
+    await api
       .put(`/api/blogs/${blog.id}`)
+      .send(blogUpdate)
+      .set('Accept', 'application/json')
+      .expect(401)
+  })
+
+  test('cannot update a 3rd party blog', async () => {
+    const currentBlogs = await testHelper.blogsInDb()
+    const blog = currentBlogs[0]
+    const blogUpdate = {
+      title: 'Auth User blog',
+      author: 'Auth User',
+      likes: 100
+    }
+    await apiAuth
+      .put(`/api/blogs/${blog.id}`)
+      .send(blogUpdate)
+      .set('Accept', 'application/json')
+      .expect(403)
+  })
+
+  test('user can update own blog, returns json and 200 OK', async () => {
+    const authUser = await User.findOne({ username: 'AuthUser' })
+    await new Blog({
+      title: 'Auth User blog',
+      author: 'Auth User',
+      likes: 2,
+      user: authUser._id
+    }).save()
+
+    const blog = await Blog.findOne({ title: 'Auth User blog' })
+    const blogUpdate = {
+      title: 'Auth User blog',
+      author: 'Auth User',
+      likes: 100
+    }
+    const response = await apiAuth
+      .put(`/api/blogs/${blog._id}`)
       .send(blogUpdate)
       .set('Accept', 'application/json')
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    updatedBlog = response.body
+    const updatedBlog = response.body
     expect(updatedBlog.likes).toBe(100)
-
-    const dbBlogs = await testHelper.blogsInDb()
-    expect(dbBlogs).toHaveLength(testBlogs.length)
   })
 })
 

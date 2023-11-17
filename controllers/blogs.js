@@ -1,5 +1,6 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
+const middleware = require('../utils/middleware')
 
 
 blogsRouter.get('/', async (request, response) => {
@@ -7,7 +8,7 @@ blogsRouter.get('/', async (request, response) => {
   response.json(blogs)
 })
 
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', middleware.userExtractor, async (request, response) => {
   const user = request.user
   const blog = new Blog({
     ...request.body,
@@ -21,7 +22,7 @@ blogsRouter.post('/', async (request, response) => {
   response.status(201).json(result)
 })
 
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', middleware.userExtractor, async (request, response) => {
   const user = request.user
   const id = request.params.id
   const blog = await Blog.findById(id)
@@ -38,8 +39,19 @@ blogsRouter.delete('/:id', async (request, response) => {
   response.status(204).end()
 })
 
-blogsRouter.put('/:id', async (request, response) => {
+blogsRouter.put('/:id', middleware.userExtractor, async (request, response) => {
+  const user = request.user
   const id = request.params.id
+  const blog = await Blog.findById(id)
+
+  if (!blog) {
+    return response.status(404).json({ error: 'Blog not found' })
+  }
+
+  if (!blog.user || blog.user.toString() !== user._id.toString()) {
+    return response.status(403).json({ error: 'Access denied. You can only update your own blogs!' })
+  }
+
   const body = request.body
   const updatedBlog = await Blog.findByIdAndUpdate(
     id, body, { new: true, runValidators: true, context: 'query' },
