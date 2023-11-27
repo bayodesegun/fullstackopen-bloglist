@@ -294,21 +294,6 @@ describe('blog update endpoint', () => {
       .expect(401)
   })
 
-  test('cannot update a 3rd party blog', async () => {
-    const currentBlogs = await testHelper.blogsInDb()
-    const blog = currentBlogs[0]
-    const blogUpdate = {
-      title: 'Auth User blog',
-      author: 'Auth User',
-      likes: 100
-    }
-    await apiAuth
-      .put(`/api/blogs/${blog.id}`)
-      .send(blogUpdate)
-      .set('Accept', 'application/json')
-      .expect(403)
-  })
-
   test('user can update own blog, returns json and 200 OK', async () => {
     const authUser = await User.findOne({ username: 'AuthUser' })
     await new Blog({

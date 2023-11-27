@@ -48,15 +48,12 @@ blogsRouter.put('/:id', middleware.userExtractor, async (request, response) => {
     return response.status(404).json({ error: 'Blog not found' })
   }
 
-  if (!blog.user || blog.user.toString() !== user._id.toString()) {
-    return response.status(403).json({ error: 'Access denied. You can only update your own blogs!' })
-  }
-
   const body = request.body
   const updatedBlog = await Blog.findByIdAndUpdate(
     id, body, { new: true, runValidators: true, context: 'query' },
   )
-  response.status(200).json(updatedBlog)
+  const populatedBlog = await updatedBlog.populate('user', { 'username': 1, 'name': 1 })
+  response.status(200).json(populatedBlog)
 })
 
 module.exports = blogsRouter
